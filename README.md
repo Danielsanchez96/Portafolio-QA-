@@ -1,56 +1,63 @@
-**Proyecto para automatizacion de pruebas con:**
+# 🚀 PROYECTO DE AUTOMATIZACIÓN DE PRUEBAS
 
-Java 18
-Screenplay
-Gradle
-Cucumber
-Selenium
-Rest Assured
-DTO
-Mysql-connector
-Junit
-Sonar
+**Tecnologías utilizadas:**
 
+* Java 18
+* Screenplay
+* Gradle
+* Cucumber
+* Selenium
+* Rest Assured
+* DTO
+* MySQL Connector
+* JUnit
+* SonarQube
 
-**IMPORTANTE LEER EL DOCUMENTO "README DE CONFIGURACIÓN"**
+---
 
+**⚠️ IMPORTANTE:** *Leer el documento "README DE CONFIGURACIÓN" antes de ejecutar.*
 
-Proyecto inicial para comenzar a automatizar pruebas con la libreria Serenity utilizando el patron de diseño Screenplay utilizando versiones actualizadas a Serenity 4.2.15
-y gradle 8.10
+Este proyecto es un punto de partida para automatizar pruebas utilizando la librería **Serenity BDD** con el patrón de diseño **Screenplay**, implementando versiones actualizadas:
 
-**Documentacion oficial**
+* Serenity: `4.2.15`
+* Gradle: `8.10`
+* Cucumber: `7.10.1`
 
-Writting User-centric tests using Serenity Screenplay
+---
 
-https://serenity-bdd.github.io/theserenitybook/latest/serenity-screenplay.html
+**📚 Documentación oficial:**
 
-Uso de version con Cucumber 7.20.1
+* Serenity Screenplay: https://serenity-bdd.github.io/theserenitybook/latest/serenity-screenplay.html
+* Repositorio oficial Serenity Core: https://github.com/serenity-bdd/serenity-core
 
-https://github.com/serenity-bdd/serenity-core
+---
 
+**🔧 Consideraciones opcionales:**
 
-**Consideraciones opcionales**
+1. **Revisar archivos base:**
 
-1. Revisar archivos base
+    * `settings.gradle`
+    * `build.gradle`
+    * `serenity.conf`
 
-    settings.gradle
-    build.gradle
-    serenity.conf
+   Asegúrate de completar los *TODO* (nombre del proyecto, dependencias, versiones, etc.).
 
-Completar tasks TODO que deben actualizarse para cada necesidad (nombre del proyecto, uso de dependencias, actualizacion de versiones de gradle)
+2. **Eliminar la carpeta `.git`** si vas a subir el proyecto a otro repositorio.
 
-2.Eliminar carpeta .git antes de subir cambios al repositorio del cliente 
+3. **Verificar los drivers** configurados en `src/test/resources/serenity.conf`.
 
-3.Verificar configuracion correcta de drivers en archivo serenity.conf src/test/resources/serenity.conf
+4. **Actualizar este `README.md`** si haces modificaciones relevantes.
 
-4.Actualizar README.md 
+---
 
-**Paquetes**
+**📁 Estructura de carpetas clave:**
 
-libs - inclusion de .jar propios en el proyecto
-ci - responsabilidad de almacenar jenkinsfile o yml files para CI/CD
-gradle - ubicacion del gradle wrapper
-src - arquitectura de automatizacion
-target - reportes de pruebas
+📁 libs         → Inclusión de .jar personalizados  
+📁 ci           → Jenkinsfile o archivos YAML para CI/CD  
+📁 gradle       → Wrapper de Gradle  
+📁 src          → Arquitectura principal del proyecto de automatización  
+📁 target       → Reportes generados por las pruebas
 
+---
 
+¡Este proyecto está diseñado para ayudarte a crear un portafolio sólido de automatización de pruebas!
