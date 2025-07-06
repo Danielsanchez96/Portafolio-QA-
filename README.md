@@ -1,4 +1,18 @@
-**Proyecto base para automatizacion de pruebas con Serenity Screenplay**
+**Proyecto para automatizacion de pruebas con:**
+
+Java 18
+Screenplay
+Gradle
+Cucumber
+Selenium
+Rest Assured
+DTO
+Mysql-connector
+Junit
+Sonar
+
+
+**IMPORTANTE LEER EL DOCUMENTO "README DE CONFIGURACIÓN"**
 
 
 Proyecto inicial para comenzar a automatizar pruebas con la libreria Serenity utilizando el patron de diseño Screenplay utilizando versiones actualizadas a Serenity 4.2.15
@@ -15,7 +29,7 @@ Uso de version con Cucumber 7.20.1
 https://github.com/serenity-bdd/serenity-core
 
 
-**Antes de iniciar**
+**Consideraciones opcionales**
 
 1. Revisar archivos base
 
@@ -23,15 +37,13 @@ https://github.com/serenity-bdd/serenity-core
     build.gradle
     serenity.conf
 
-Completar tasks TODO que deben actualizarse para cada cliente (nombre del proyecto, uso de dependencias, actualizacion de versiones de gradle)
+Completar tasks TODO que deben actualizarse para cada necesidad (nombre del proyecto, uso de dependencias, actualizacion de versiones de gradle)
 
-2. Renombrar paquetes co.com.client.project a acoplarse con cliente y proyecto
+2.Eliminar carpeta .git antes de subir cambios al repositorio del cliente 
 
-3. Eliminar carpeta .git antes de subir cambios al repositorio del cliente 
+3.Verificar configuracion correcta de drivers en archivo serenity.conf src/test/resources/serenity.conf
 
-4. Verificar configuracion correcta de drivers en archivo serenity.conf src/test/resources/serenity.conf
-
-5. Actualizar README.md 
+4.Actualizar README.md 
 
 **Paquetes**
 
