@@ -14,6 +14,13 @@ pipeline {
     }
 
     stages {
+
+        stage('Verificar shell') {
+            steps {
+                bat 'echo Ejecutando con cmd.exe'
+            }
+        }
+
         stage('Obtener código') {
             steps {
                 bat 'git config --global --replace-all http.sslVerify false'
@@ -41,8 +48,6 @@ pipeline {
                 }
             }
         }
-
-
 
         stage('Publicar Evidencia') {
             steps {
