@@ -17,9 +17,9 @@ pipeline {
     }
 
     environment {
-        SCM_URL = ""
+        SCM_URL = "https://github.com/Danielsanchez96/Portafolio-QA-.git"
         SCM_CREDENTIALS = ""
-        SCM_BRANCH = ""
+        SCM_BRANCH = "main"
         TEST_RUNNER = ""
         NOMBRE_PROYECTO_GIT = "base-project-qa"
         EMAIL_DEVELOPERS = ""
@@ -58,7 +58,8 @@ pipeline {
                     catchError {
                         echo "RUNNING CLEAN"
                         bat "gradlew clean"
-                        bat "gradlew test --tests ${TEST_RUNNER} --info"
+                        //bat "gradlew test --tests ${TEST_RUNNER} --info"
+                        bat "gradlew clean test aggregate"
                         currentBuild.result = 'SUCCESS'
                     }
                     echo "El resultado de la prueba segunda ejecución es : '${currentBuild.result}'"
