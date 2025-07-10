@@ -1,67 +1,52 @@
 pipeline {
-    agent { label params.AGENTE_EJECUCION }
+    agent any
 
-    // Forzar uso de cmd.exe (Windows)
-    options {
-        shell('cmd')
+    tools {
+        jdk 'Java 17'
+        gradle 'gradle'
     }
 
     environment {
         SCM_URL = "https://github.com/Danielsanchez96/Portafolio-QA-.git"
         SCM_BRANCH = "main"
         NOMBRE_PROYECTO_GIT = "base-project-qa"
-        RECIBE = "tucorreo@dominio.com"
+        RECIBE = "danielisaacsanchezsepulveda1@gmail.com"
     }
 
     parameters {
-        string(name: 'AGENTE_EJECUCION', defaultValue: '', description: 'Agente para ejecutar pruebas')
         string(name: 'TEST_RUNNER', defaultValue: '', description: 'Nombre del test a ejecutar (opcional)')
     }
 
     stages {
-        stage('Verificar shell') {
-            steps {
-                bat 'echo Ejecutando con cmd.exe'
-            }
-        }
-
-        stage('Obtener código') {
+        stage('Clonar proyecto') {
             steps {
                 bat 'git config --global --replace-all http.sslVerify false'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: "${SCM_BRANCH}"]],
-                    userRemoteConfigs: [[url: "${SCM_URL}"]]
-                ])
+                git url: "${SCM_URL}", branch: "${SCM_BRANCH}"
             }
         }
 
         stage('Ejecutar pruebas') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')]) {
-                    script {
-                        bat 'gradlew.bat clean'
-
-                        if (params.TEST_RUNNER?.trim()) {
-                            echo "Ejecutando test específico: ${params.TEST_RUNNER}"
-                            bat "gradlew.bat test --tests ${params.TEST_RUNNER} --info"
-                        } else {
-                            bat "gradlew.bat clean test aggregate"
-                        }
+                script {
+                    if (params.TEST_RUNNER?.trim()) {
+                        echo "Ejecutando test específico: ${params.TEST_RUNNER}"
+                        bat "gradlew.bat clean test --tests ${params.TEST_RUNNER} aggregate"
+                    } else {
+                        bat "gradlew.bat clean test aggregate"
                     }
                 }
             }
         }
 
-        stage('Publicar Evidencia') {
+        stage('Publicar reporte Serenity') {
             steps {
                 publishHTML([
                     reportDir: 'target\\site\\serenity',
                     reportFiles: 'index.html',
-                    reportName: 'Evidencias de Prueba',
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true
+                    reportName: 'Reporte Serenity',
+                    keepAll: true,
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true
                 ])
             }
         }
@@ -82,11 +67,14 @@ pipeline {
     }
 
     post {
-        failure {
-            echo 'La ejecución falló.'
+        always {
+            echo '📌 Pipeline finalizado.'
         }
         success {
-            echo 'La ejecución fue exitosa.'
+            echo '✅ La ejecución fue exitosa.'
+        }
+        failure {
+            echo '❌ La ejecución falló.'
         }
     }
 }
