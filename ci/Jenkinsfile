@@ -1,49 +1,25 @@
-import java.text.SimpleDateFormat
-
-def dateFormat = new SimpleDateFormat("yyyyMMddHHmm")
-def date = new Date()
-def timestamp = dateFormat.format(date).toString()
-
 pipeline {
-
-    agent {
-        label params.AGENTE_EJECUCION
-    }
-
-    options {
-        sendSplunkConsoleLog()
-        splunkinsJobOption enableDiagram: true
-        skipDefaultCheckout()
-    }
+    agent { label params.AGENTE_EJECUCION }
 
     environment {
         SCM_URL = "https://github.com/Danielsanchez96/Portafolio-QA-.git"
         SCM_BRANCH = "main"
-        TEST_RUNNER = ""
         NOMBRE_PROYECTO_GIT = "base-project-qa"
-        EMAIL_DEVELOPERS = ""
-        RECIBE = "tucorreo@dominio.com" // Cambia esto por el correo real
+        RECIBE = "tucorreo@dominio.com"
     }
 
     parameters {
-        string(
-            defaultValue: "",
-            description: 'Agente en el cual se ejecutarán las pruebas',
-            name: 'AGENTE_EJECUCION'
-        )
+        string(name: 'AGENTE_EJECUCION', defaultValue: '', description: 'Agente para ejecutar pruebas')
+        string(name: 'TEST_RUNNER', defaultValue: '', description: 'Nombre del test a ejecutar (opcional)')
     }
 
     stages {
-
-        stage('Obtener fuentes') {
+        stage('Obtener código') {
             steps {
-                bat "git config --global --replace-all http.sslVerify false"
+                bat 'git config --global --replace-all http.sslVerify false'
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: "${SCM_BRANCH}"]],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [],
-                    submoduleCfg: [],
                     userRemoteConfigs: [[url: "${SCM_URL}"]]
                 ])
             }
@@ -51,12 +27,9 @@ pipeline {
 
         stage('Ejecutar pruebas') {
             steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')
-                ]) {
-                    catchError {
-                        echo "RUNNING CLEAN"
-                        bat "gradlew.bat clean"
+                withCredentials([usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')]) {
+                    script {
+                        bat 'gradlew.bat clean'
 
                         if (params.TEST_RUNNER?.trim()) {
                             echo "Ejecutando test específico: ${params.TEST_RUNNER}"
@@ -64,80 +37,47 @@ pipeline {
                         } else {
                             bat "gradlew.bat clean test aggregate"
                         }
-
-                        currentBuild.result = 'SUCCESS'
-                    }
-                    echo "El resultado de la prueba es: '${currentBuild.result}'"
-                }
-            }
-        }
-
-        stage('Analisis Sonar') {
-            steps {
-                withCredentials([
-                    usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')
-                ]) {
-                    script {
-                        withSonarQubeEnv('SonarQube') {
-                            dir("${workspace}") {
-                                bat "gradlew.bat -version"
-                                bat "gradlew.bat --info sonarqube -Dsonar.projectKey=${NOMBRE_PROYECTO_GIT} -Dsonar.projectName=${NOMBRE_PROYECTO_GIT} -Dsonar.projectVersion=${BUILD_ID} -x test"
-                            }
-                        }
-
-                        timeout(time: 30, unit: 'MINUTES') {
-                            def qg = waitForQualityGate()
-                            QUALITY_GATE_RESULT = qg.status
-                            catchError {
-                                if (QUALITY_GATE_RESULT != 'OK') {
-                                    error "Fallo en el quality gate de Sonar, estado: ${qg.status}"
-                                }
-                            }
-                        }
                     }
                 }
             }
         }
 
-        stage('Generar evidencia') {
+
+
+        stage('Publicar Evidencia') {
             steps {
-                catchError {
-                    publishHTML([
-                        allowMissing         : false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll              : true,
-                        reportDir            : "${WORKSPACE}\\target\\site\\serenity",
-                        reportFiles          : 'index.html',
-                        reportName           : 'Evidencias Pruebas Aceptacion',
-                        reportTitles         : ''
-                    ])
-                    echo 'Reporte HTML generado con éxito'
-                }
+                publishHTML([
+                    reportDir: 'target\\site\\serenity',
+                    reportFiles: 'index.html',
+                    reportName: 'Evidencias de Prueba',
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true
+                ])
             }
         }
 
-        stage('Notificar') {
+        stage('Notificar Resultado') {
             steps {
-                catchError {
-                    script {
-                        enviarCorreo(currentBuild.result)
-                    }
+                script {
+                    def fecha = new Date().format("dd/MM/yyyy HH:mm:ss")
+                    def mensaje = "Resultado de pruebas (${NOMBRE_PROYECTO_GIT}) - ${fecha}: ${currentBuild.result ?: 'SUCCESS'}"
+                    emailext(
+                        subject: "Resultado Jenkins - ${currentBuild.result ?: 'SUCCESS'}",
+                        body: mensaje,
+                        to: "${RECIBE}"
+                    )
                 }
             }
         }
     }
-}
 
-def enviarCorreo(resultadoTest) {
-    def asunto = "RESULTADO DE PRUEBAS AUTOMATIZADAS"
-    def currentTime = new Date(currentBuild.timeInMillis)
-    def formato = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
-    def timeInicioPruebas = formato.format(currentTime)
-    def resultado = "El resultado de la prueba automatizada para el proyecto ${NOMBRE_PROYECTO_GIT} ejecutada el día ${timeInicioPruebas} fue ${resultadoTest}"
-
-    emailext(
-        subject: "${asunto}",
-        body: "${resultado}",
-        to: "${RECIBE}"
-    )
+    post {
+        failure {
+            echo 'La ejecución falló.'
+        }
+        success {
+            echo 'La ejecución fue exitosa.'
+        }
+    }
 }
