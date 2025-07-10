@@ -15,7 +15,7 @@
 
 ---
 
-**⚠️ IMPORTANTE:** *Leer el documento "README DE CONFIGURACIÓN" antes de ejecutar.*
+**⚠️ IMPORTANTE:** *Leer el documento "README DE CONFIGURACIÓN.pdf" antes de ejecutar.*
 
 Este proyecto es un punto de partida para automatizar pruebas utilizando la librería **Serenity BDD** con el patrón de diseño **Screenplay**, implementando versiones actualizadas:
 
