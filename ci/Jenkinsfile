@@ -18,18 +18,17 @@ pipeline {
 
     environment {
         SCM_URL = "https://github.com/Danielsanchez96/Portafolio-QA-.git"
-        SCM_CREDENTIALS = ""
         SCM_BRANCH = "main"
         TEST_RUNNER = ""
         NOMBRE_PROYECTO_GIT = "base-project-qa"
         EMAIL_DEVELOPERS = ""
-        RECIBE = "tucorreo@dominio.com" // Ajusta con el correo deseado
+        RECIBE = "tucorreo@dominio.com" // Cambia esto por el correo real
     }
 
     parameters {
         string(
             defaultValue: "",
-            description: 'Agente en el cual se ejecutaran las pruebas',
+            description: 'Agente en el cual se ejecutarán las pruebas',
             name: 'AGENTE_EJECUCION'
         )
     }
@@ -39,13 +38,13 @@ pipeline {
         stage('Obtener fuentes') {
             steps {
                 bat "git config --global --replace-all http.sslVerify false"
-                checkout scm: ([
+                checkout([
                     $class: 'GitSCM',
                     branches: [[name: "${SCM_BRANCH}"]],
                     doGenerateSubmoduleConfigurations: false,
                     extensions: [],
                     submoduleCfg: [],
-                    userRemoteConfigs: [[credentialsId: "${SCM_CREDENTIALS}", url: "${SCM_URL}"]]
+                    userRemoteConfigs: [[url: "${SCM_URL}"]]
                 ])
             }
         }
@@ -57,12 +56,18 @@ pipeline {
                 ]) {
                     catchError {
                         echo "RUNNING CLEAN"
-                        bat "gradlew clean"
-                        //bat "gradlew test --tests ${TEST_RUNNER} --info"
-                        bat "gradlew clean test aggregate"
+                        bat "gradlew.bat clean"
+
+                        if (params.TEST_RUNNER?.trim()) {
+                            echo "Ejecutando test específico: ${params.TEST_RUNNER}"
+                            bat "gradlew.bat test --tests ${params.TEST_RUNNER} --info"
+                        } else {
+                            bat "gradlew.bat clean test aggregate"
+                        }
+
                         currentBuild.result = 'SUCCESS'
                     }
-                    echo "El resultado de la prueba segunda ejecución es : '${currentBuild.result}'"
+                    echo "El resultado de la prueba es: '${currentBuild.result}'"
                 }
             }
         }
@@ -75,8 +80,8 @@ pipeline {
                     script {
                         withSonarQubeEnv('SonarQube') {
                             dir("${workspace}") {
-                                bat "gradlew -version"
-                                bat "gradlew --info sonarqube -Dsonar.projectKey=${NOMBRE_PROYECTO_GIT} -Dsonar.projectName=${NOMBRE_PROYECTO_GIT} -Dsonar.projectVersion=${BUILD_ID} -x test"
+                                bat "gradlew.bat -version"
+                                bat "gradlew.bat --info sonarqube -Dsonar.projectKey=${NOMBRE_PROYECTO_GIT} -Dsonar.projectName=${NOMBRE_PROYECTO_GIT} -Dsonar.projectVersion=${BUILD_ID} -x test"
                             }
                         }
 
@@ -106,7 +111,7 @@ pipeline {
                         reportName           : 'Evidencias Pruebas Aceptacion',
                         reportTitles         : ''
                     ])
-                    echo 'Reporte Html realizado con exito'
+                    echo 'Reporte HTML generado con éxito'
                 }
             }
         }
@@ -128,7 +133,7 @@ def enviarCorreo(resultadoTest) {
     def currentTime = new Date(currentBuild.timeInMillis)
     def formato = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
     def timeInicioPruebas = formato.format(currentTime)
-    def resultado = "El resultado de la prueba automatizada para el proyecto ${NOMBRE_PROYECTO_GIT} ejecutada el dia ${timeInicioPruebas} fue ${resultadoTest}"
+    def resultado = "El resultado de la prueba automatizada para el proyecto ${NOMBRE_PROYECTO_GIT} ejecutada el día ${timeInicioPruebas} fue ${resultadoTest}"
 
     emailext(
         subject: "${asunto}",
