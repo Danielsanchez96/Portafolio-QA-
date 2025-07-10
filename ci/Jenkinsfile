@@ -1,6 +1,11 @@
 pipeline {
     agent { label params.AGENTE_EJECUCION }
 
+    // Forzar uso de cmd.exe (Windows)
+    options {
+        shell('cmd')
+    }
+
     environment {
         SCM_URL = "https://github.com/Danielsanchez96/Portafolio-QA-.git"
         SCM_BRANCH = "main"
@@ -14,7 +19,6 @@ pipeline {
     }
 
     stages {
-
         stage('Verificar shell') {
             steps {
                 bat 'echo Ejecutando con cmd.exe'
