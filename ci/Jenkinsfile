@@ -18,11 +18,12 @@ pipeline {
 
     environment {
         SCM_URL = ""
-        SCM_CREDENTIALS = "" //Credenciales
-        SCM_BRANCH = "" //Rama git
+        SCM_CREDENTIALS = ""
+        SCM_BRANCH = ""
         TEST_RUNNER = ""
-        NOMBRE_PROYECTO_GIT = "base-project-qa" //Nombre del proyecto en GIT
+        NOMBRE_PROYECTO_GIT = "base-project-qa"
         EMAIL_DEVELOPERS = ""
+        RECIBE = "tucorreo@dominio.com" // Ajusta con el correo deseado
     }
 
     parameters {
@@ -34,17 +35,18 @@ pipeline {
     }
 
     stages {
+
         stage('Obtener fuentes') {
             steps {
-               sh "git config --global --replace-all http.sslVerify false"
-               checkout scm: ([
-                   $class: 'GitSCM',
-                   branches: [[name: "${SCM_BRANCH}"]],
-                   doGenerateSubmoduleConfigurations: false,
-                   extensions: [],
-                   submoduleCfg: [],
-                   userRemoteConfigs: [[credentialsId: "${SCM_CREDENTIALS}", url: "${SCM_URL}"]]
-               ])
+                bat "git config --global --replace-all http.sslVerify false"
+                checkout scm: ([
+                    $class: 'GitSCM',
+                    branches: [[name: "${SCM_BRANCH}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [[credentialsId: "${SCM_CREDENTIALS}", url: "${SCM_URL}"]]
+                ])
             }
         }
 
@@ -52,39 +54,33 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')
-                ])
-                {
+                ]) {
                     catchError {
-                        sh "chmod 777 gradlew"
                         echo "RUNNING CLEAN"
-                        sh "./gradlew clean"
-                        sh "./gradlew test --tests ${TEST_RUNNER} --info"
+                        bat "gradlew clean"
+                        bat "gradlew test --tests ${TEST_RUNNER} --info"
                         currentBuild.result = 'SUCCESS'
                     }
                     echo "El resultado de la prueba segunda ejecución es : '${currentBuild.result}'"
-
                 }
             }
         }
 
-        stage('Analisis Sonar'){
-            steps{
+        stage('Analisis Sonar') {
+            steps {
                 withCredentials([
-                    usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD'),
+                    usernamePassword(credentialsId: 'Repositorio-Maven', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')
                 ]) {
                     script {
                         withSonarQubeEnv('SonarQube') {
-                            dir("${workspace}"){
-                                sh "./gradlew -version"
-                                sh "chmod 777 ./gradlew";
-                                sh "./gradlew --info sonarqube -Dsonar.projectKey=${NOMBRE_PROYECTO_GIT} -Dsonar.projectName=${NOMBRE_PROYECTO_GIT} -Dsonar.projectVersion=${BUILD_ID} -x test"
+                            dir("${workspace}") {
+                                bat "gradlew -version"
+                                bat "gradlew --info sonarqube -Dsonar.projectKey=${NOMBRE_PROYECTO_GIT} -Dsonar.projectName=${NOMBRE_PROYECTO_GIT} -Dsonar.projectVersion=${BUILD_ID} -x test"
                             }
                         }
 
-                        }
                         timeout(time: 30, unit: 'MINUTES') {
                             def qg = waitForQualityGate()
-                            print "Finished waiting"
                             QUALITY_GATE_RESULT = qg.status
                             catchError {
                                 if (QUALITY_GATE_RESULT != 'OK') {
@@ -97,8 +93,6 @@ pipeline {
             }
         }
 
-
-
         stage('Generar evidencia') {
             steps {
                 catchError {
@@ -106,7 +100,7 @@ pipeline {
                         allowMissing         : false,
                         alwaysLinkToLastBuild: true,
                         keepAll              : true,
-                        reportDir            : "${WORKSPACE}//target//site//serenity",
+                        reportDir            : "${WORKSPACE}\\target\\site\\serenity",
                         reportFiles          : 'index.html',
                         reportName           : 'Evidencias Pruebas Aceptacion',
                         reportTitles         : ''
@@ -126,19 +120,18 @@ pipeline {
             }
         }
     }
-
 }
 
 def enviarCorreo(resultadoTest) {
-    def asunto = "RESLTADO DE PRUEBAS AUTOMATIZADAS"
+    def asunto = "RESULTADO DE PRUEBAS AUTOMATIZADAS"
     def currentTime = new Date(currentBuild.timeInMillis)
     def formato = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
     def timeInicioPruebas = formato.format(currentTime)
-    def resultado = "El resultado de la prueba automatizada para el proyecto ${NOMBRE_PROYECTO_GIT} ejecutada el dia ${formato} fue ${resultadoTest}"
+    def resultado = "El resultado de la prueba automatizada para el proyecto ${NOMBRE_PROYECTO_GIT} ejecutada el dia ${timeInicioPruebas} fue ${resultadoTest}"
 
     emailext(
         subject: "${asunto}",
         body: "${resultado}",
-        to: "${recibe}"
+        to: "${RECIBE}"
     )
 }
